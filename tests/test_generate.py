@@ -1,4 +1,4 @@
-from generate import build_query, parse_contributions, bucket_data
+from generate import build_query, parse_contributions, bucket_data, generate_svg
 
 
 def test_build_query_returns_valid_graphql():
@@ -58,3 +58,21 @@ def test_bucket_monthly_long_range():
     buckets, labels = bucket_data(days)
     assert 12 <= len(buckets) <= 13  # ~12 months
     assert len(labels) <= 12
+
+
+def test_generate_svg_returns_valid_svg():
+    buckets = [("2026-01-01", 3), ("2026-01-02", 5), ("2026-01-03", 1)]
+    labels = ["2026-01-01", "2026-01-03"]
+    svg = generate_svg(buckets, labels)
+    assert svg.startswith("<svg")
+    assert "viewBox" in svg
+    assert "</svg>" in svg
+    assert "prefers-color-scheme: dark" in svg
+    assert "<polyline" in svg or "<path" in svg
+
+
+def test_generate_svg_handles_zero_contributions():
+    buckets = [("2026-01-01", 0), ("2026-01-02", 0)]
+    labels = ["2026-01-01", "2026-01-02"]
+    svg = generate_svg(buckets, labels)
+    assert "</svg>" in svg  # should not crash
