@@ -36,27 +36,9 @@ def parse_contributions(response: dict) -> List[Tuple[str, int]]:
 
 
 def bucket_data(days: List[Tuple[str, int]]) -> Tuple[List[Tuple[str, int]], List[str]]:
-    """Bucket daily contribution data adaptively. Returns (buckets, label_strings)."""
-    num_days = len(days)
-
-    if num_days <= 60:
-        buckets = days
-        max_labels = 7
-    elif num_days <= 180:
-        grouped = defaultdict(int)
-        for date_str, count in days:
-            d = date.fromisoformat(date_str)
-            week_start = d - timedelta(days=d.weekday())
-            grouped[week_start.isoformat()] += count
-        buckets = sorted(grouped.items())
-        max_labels = 7
-    else:
-        grouped = defaultdict(int)
-        for date_str, count in days:
-            month_key = date_str[:7]
-            grouped[month_key] += count
-        buckets = sorted(grouped.items())
-        max_labels = 12
+    """Keep daily granularity, pick evenly spaced labels. Returns (buckets, label_strings)."""
+    buckets = days
+    max_labels = 12
 
     if len(buckets) <= max_labels:
         labels = [b[0] for b in buckets]
