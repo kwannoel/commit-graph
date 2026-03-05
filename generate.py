@@ -1,6 +1,9 @@
 from typing import List, Tuple
 from datetime import date, timedelta
 from collections import defaultdict
+import subprocess
+import json
+import sys
 
 
 def build_query(username: str) -> str:
@@ -159,3 +162,36 @@ def generate_svg(buckets: List[Tuple[str, int]], labels: List[str]) -> str:
 </svg>"""
 
     return svg
+
+
+def fetch_contributions() -> List[Tuple[str, int]]:
+    """Fetch contribution data using gh CLI."""
+    # Get username
+    result = subprocess.run(
+        ["gh", "api", "/user", "--jq", ".login"],
+        capture_output=True, text=True, check=True,
+    )
+    username = result.stdout.strip()
+
+    # Fetch contributions
+    query = build_query(username)
+    result = subprocess.run(
+        ["gh", "api", "graphql", "-f", f"query={query}"],
+        capture_output=True, text=True, check=True,
+    )
+    response = json.loads(result.stdout)
+    return parse_contributions(response)
+
+
+def main():
+    output_path = sys.argv[1] if len(sys.argv) > 1 else "contributions.svg"
+    days = fetch_contributions()
+    buckets, labels = bucket_data(days)
+    svg = generate_svg(buckets, labels)
+    with open(output_path, "w") as f:
+        f.write(svg)
+    print(f"Generated {output_path} ({len(days)} days, {len(buckets)} buckets)")
+
+
+if __name__ == "__main__":
+    main()
