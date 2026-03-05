@@ -1,5 +1,4 @@
-import json
-from generate import build_query, parse_contributions
+from generate import build_query, parse_contributions, bucket_data
 
 
 def test_build_query_returns_valid_graphql():
@@ -31,3 +30,31 @@ def test_parse_contributions_extracts_daily_data():
     }
     result = parse_contributions(raw)
     assert result == [("2026-01-01", 3), ("2026-01-02", 2)]
+
+
+def test_bucket_daily_short_range():
+    """30 days of data should stay as daily buckets."""
+    days = [(f"2026-01-{d:02d}", d % 5) for d in range(1, 31)]
+    buckets, labels = bucket_data(days)
+    assert len(buckets) == 30  # one per day
+    assert len(labels) <= 8  # sparse labels
+
+
+def test_bucket_weekly_medium_range():
+    """90 days of data should become weekly buckets."""
+    from datetime import date, timedelta
+    start = date(2026, 1, 1)
+    days = [((start + timedelta(days=i)).isoformat(), i % 7) for i in range(90)]
+    buckets, labels = bucket_data(days)
+    assert 12 <= len(buckets) <= 14  # ~13 weeks
+    assert len(labels) <= 8
+
+
+def test_bucket_monthly_long_range():
+    """365 days of data should become monthly buckets."""
+    from datetime import date, timedelta
+    start = date(2025, 3, 6)
+    days = [((start + timedelta(days=i)).isoformat(), i % 10) for i in range(365)]
+    buckets, labels = bucket_data(days)
+    assert 12 <= len(buckets) <= 13  # ~12 months
+    assert len(labels) <= 12
