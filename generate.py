@@ -164,16 +164,8 @@ def generate_svg(buckets: List[Tuple[str, int]], labels: List[str]) -> str:
     return svg
 
 
-def fetch_contributions() -> List[Tuple[str, int]]:
+def fetch_contributions(username: str) -> List[Tuple[str, int]]:
     """Fetch contribution data using gh CLI."""
-    # Get username
-    result = subprocess.run(
-        ["gh", "api", "/user", "--jq", ".login"],
-        capture_output=True, text=True, check=True,
-    )
-    username = result.stdout.strip()
-
-    # Fetch contributions
     query = build_query(username)
     result = subprocess.run(
         ["gh", "api", "graphql", "-f", f"query={query}"],
@@ -184,8 +176,12 @@ def fetch_contributions() -> List[Tuple[str, int]]:
 
 
 def main():
-    output_path = sys.argv[1] if len(sys.argv) > 1 else "contributions.svg"
-    days = fetch_contributions()
+    if len(sys.argv) < 2:
+        print("Usage: generate.py <username> [output_path]", file=sys.stderr)
+        sys.exit(1)
+    username = sys.argv[1]
+    output_path = sys.argv[2] if len(sys.argv) > 2 else "contributions.svg"
+    days = fetch_contributions(username)
     buckets, labels = bucket_data(days)
     svg = generate_svg(buckets, labels)
     with open(output_path, "w") as f:

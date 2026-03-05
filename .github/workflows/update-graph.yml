@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
 
       - name: Generate graph
-        run: python generate.py contributions.svg
+        run: python generate.py kwannoel contributions.svg
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
