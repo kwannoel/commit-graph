@@ -32,32 +32,22 @@ def test_parse_contributions_extracts_daily_data():
     assert result == [("2026-01-01", 3), ("2026-01-02", 2)]
 
 
-def test_bucket_daily_short_range():
-    """30 days of data should stay as daily buckets."""
-    days = [(f"2026-01-{d:02d}", d % 5) for d in range(1, 31)]
-    buckets, labels = bucket_data(days)
-    assert len(buckets) == 30  # one per day
-    assert len(labels) <= 8  # sparse labels
-
-
-def test_bucket_weekly_medium_range():
-    """90 days of data should become weekly buckets."""
+def test_bucket_data_trims_to_window():
+    """365 days of data should be trimmed to the 6-month window."""
     from datetime import date, timedelta
-    start = date(2026, 1, 1)
-    days = [((start + timedelta(days=i)).isoformat(), i % 7) for i in range(90)]
-    buckets, labels = bucket_data(days)
-    assert 12 <= len(buckets) <= 14  # ~13 weeks
-    assert len(labels) <= 8
-
-
-def test_bucket_monthly_long_range():
-    """365 days of data should become monthly buckets."""
-    from datetime import date, timedelta
-    start = date(2025, 3, 6)
+    start = date(2025, 3, 7)
     days = [((start + timedelta(days=i)).isoformat(), i % 10) for i in range(365)]
     buckets, labels = bucket_data(days)
-    assert 12 <= len(buckets) <= 13  # ~12 months
+    assert len(buckets) == 182
+    assert buckets[0][0] == days[-182][0]
     assert len(labels) <= 12
+
+
+def test_bucket_data_short_input_unchanged():
+    """Input shorter than window should pass through unchanged."""
+    days = [(f"2026-01-{d:02d}", d) for d in range(1, 31)]
+    buckets, labels = bucket_data(days)
+    assert len(buckets) == 30
 
 
 def test_generate_svg_returns_valid_svg():

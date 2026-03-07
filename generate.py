@@ -35,9 +35,9 @@ def parse_contributions(response: dict) -> List[Tuple[str, int]]:
     return days
 
 
-def bucket_data(days: List[Tuple[str, int]]) -> Tuple[List[Tuple[str, int]], List[str]]:
-    """Keep daily granularity, pick evenly spaced labels. Returns (buckets, label_strings)."""
-    buckets = days
+def bucket_data(days: List[Tuple[str, int]], window_days: int = 182) -> Tuple[List[Tuple[str, int]], List[str]]:
+    """Keep daily granularity over a sliding window, pick evenly spaced labels."""
+    buckets = days[-window_days:]
     max_labels = 12
 
     if len(buckets) <= max_labels:
